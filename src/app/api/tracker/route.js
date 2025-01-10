@@ -8,13 +8,13 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-// Get the data as Form Data
+  // Get the data as Form Data
   const formData = await request.formData();
 
-//Get the current timestamp
+  //Get the current timestamp
   const timestamp = Date.now();
 
-// Prepare location data
+  // Prepare location data
   const location = {
     longitude: `${formData.get('longitude')}`,
     latitude: `${formData.get('latitude')}`,
@@ -22,10 +22,10 @@ export async function POST(request) {
     animalProneAreas: `${formData.get('animalProneAreas')}`,
   };
 
-// Connect to MongoDB
+  // Connect to MongoDB
   await mongoDB();
 
-// Save to MongoDB
+  // Save to MongoDB
   await locationTracker.create(location);
   console.log('Location Saved');
 
