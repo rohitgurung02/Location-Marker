@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import mongoDB from '../../../../lib/mongoDB/mongoDB'
 import locationTracker from '../../../../lib/config/models/locationTracker';
 
-export async function GET(request) {
+export async function GET(request,response) {
   console.log('location added');
-  return NextResponse.json({ msg: 'API Working' });
+  return NextResponse.json({ msg: response });
 }
 
 export async function POST(request) {
