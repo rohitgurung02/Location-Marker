@@ -1,8 +1,7 @@
 {
     "functions": {
-      "api/tracker": {
+      "api/tracker/*.js": {
         "maxDuration": 30
       }
     }
   }
-  
