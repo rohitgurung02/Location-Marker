@@ -1,6 +1,6 @@
 {
     "functions": {
-      "api/tracker.js": {
+      "src/app/api/tracker/route.js": {
         "maxDuration": 30
       }
     }
