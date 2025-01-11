@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import mongoDB from '../../../../lib/mongoDB/mongoDB';
-import locationTracker from '../../../../lib/config/models/locationTracker';
+import { NextResponse } from "next/server";
+import mongoDB from "../../../../lib/mongoDB/mongoDB";
+import locationTracker from "../../../../lib/config/models/locationTracker";
 
 export async function GET() {
   try {
-    console.log('Fetching location data');
+    console.log("Fetching location data");
 
     // Connect to MongoDB
     await mongoDB();
@@ -15,8 +15,11 @@ export async function GET() {
     // Return the data in the response
     return NextResponse.json({ success: true, data: locations });
   } catch (error) {
-    console.error('Error fetching location data:', error);
-    return NextResponse.json({ success: false, msg: 'Error fetching data' }, { status: 500 });
+    console.error("Error fetching location data:", error);
+    return NextResponse.json(
+      { success: false, msg: "Error fetching data" },
+      { status: 500 }
+    );
   }
 }
 
@@ -29,18 +32,18 @@ export async function POST(request) {
 
   // Prepare location data
   const location = {
-    longitude: `${formData.get('longitude')}`,
-    latitude: `${formData.get('latitude')}`,
-    potholes: `${formData.get('potholes')}`,
-    animalProneAreas: `${formData.get('animalProneAreas')}`,
+    longitude: `${formData.get("longitude")}`,
+    latitude: `${formData.get("latitude")}`,
+    potholes: `${formData.get("potholes")}`,
+    animalProneAreas: `${formData.get("animalProneAreas")}`,
   };
 
   // Connect to MongoDB
   await mongoDB();
 
-  // Save to MongoDB
+  // Save to Config/Models/locationTracker
   await locationTracker.create(location);
-  console.log('Location Saved');
+  console.log("Location Saved");
 
-  return NextResponse.json({ success: true, msg: 'All Data Added' });
+  return NextResponse.json({ success: true, msg: "All Data Added" });
 }

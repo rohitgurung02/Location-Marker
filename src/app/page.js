@@ -1,48 +1,44 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from 'next/dynamic';
 
-const Map = dynamic(() => import('../components/Map'), { ssr: false });
-
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
   const [locations, setLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
 
-  // Check if the code is running on the client-side
   useEffect(() => {
-    setIsClient(true); // Mark as client-side after mounting
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch("/api/tracker");
+        const data = await response.json();
+
+        if (data.success) {
+        
+          const validLocations = data.data.map((loc) => ({
+            locationLatitude: parseFloat(loc.latitude),
+            locationLongitude: parseFloat(loc.longitude),
+            locationName: loc.potholes || loc.animalProneAreas,
+          }));
+          setLocations(validLocations);
+        } else {
+          console.error("Failed to fetch locations");
+        }
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocations();
   }, []);
 
-  // Fetch location data only after the component has mounted on the client
+  // Watch for user geolocation
   useEffect(() => {
-    if (isClient) {
-      const fetchLocations = async () => {
-        try {
-          const response = await fetch('/api/tracker/route'); // Adjust the API endpoint if needed
-          const data = await response.json();
-          console.log(data);
-          if (data.success) {
-            setLocations(data.data); // Set the locations data to the state
-          } else {
-            console.error('Failed to fetch locations');
-          }
-        } catch (error) {
-          console.error('Error fetching locations:', error);
-        } finally {
-          setIsLoading(false); // Set loading to false once data is fetched
-        }
-      };
-
-      fetchLocations();
-    }
-  }, [isClient]); // Runs only after component mounts on the client
-
-  // Watch for user geolocation (only on client side)
-  useEffect(() => {
-    if (isClient && !isLoading && "geolocation" in navigator) {
+    if (!isLoading && "geolocation" in navigator) {
       const watcher = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -50,8 +46,13 @@ export default function Home() {
 
           // Check proximity to each location
           locations.forEach((loc) => {
-            const distance = getDistance(latitude, longitude, loc.latitude, loc.longitude);
-            if (distance < 50) { // 50 meters proximity
+            const distance = getDistance(
+              latitude,
+              longitude,
+              loc.locationLatitude,
+              loc.locationLongitude
+            );
+            if (distance < 50) {
               alert(`You are near ${loc.locationName}`);
             }
           });
@@ -62,7 +63,7 @@ export default function Home() {
 
       return () => navigator.geolocation.clearWatch(watcher);
     }
-  }, [locations, isLoading, isClient]); // Re-run when locations or isLoading changes
+  }, [locations, isLoading]);
 
   const getDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Earth radius in meters
@@ -71,23 +72,33 @@ export default function Home() {
     const Δφ = ((lat2 - lat1) * Math.PI) / 180;
     const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c; // Distance in meters
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // Show a loading message or spinner while fetching locations
+    return <div>Loading map and data...</div>; // Show a loading message or spinner while fetching data
   }
 
   return (
     <div>
-      {isClient ? (
-        <Map locations={locations} userPosition={userPosition} />
-      ) : null}
+      <MapContainer center={userPosition} zoom={15} style={{ height: "100vh", width: "100%" }}>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      {locations.map((loc, index) => (
+        <Marker key={index} position={[loc.locationLatitude, loc.locationLongitude]}>
+          <Popup>{loc.locationName}</Popup>
+        </Marker>
+      ))}
+      {userPosition && (
+        <Marker position={userPosition}>
+          <Popup>You are here</Popup>
+        </Marker>
+      )}
+    </MapContainer>
     </div>
   );
 }
