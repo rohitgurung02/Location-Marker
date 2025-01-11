@@ -4,35 +4,54 @@ import { useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
 
 const Map = dynamic(() => import('../components/Map'), { ssr: false });
-const locations = [
-  {
-    locationLatitude: 32.192147,
-    locationLongitude: 76.349229,
-    locationName: "Pothole 1",
-    locationAreaCategory: "Pothole",
-  },
-  {
-    locationLatitude: 32.193206,
-    locationLongitude: 76.347697,
-    locationName: "Animal Zone",
-    locationAreaCategory: "Animal Prone Area",
-  },
-];
 
 export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
+  const [locations, setLocations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
+  // Check if the code is running on the client-side
   useEffect(() => {
-    if ("geolocation" in navigator) {
+    setIsClient(true); // Mark as client-side after mounting
+  }, []);
+
+  // Fetch location data only after the component has mounted on the client
+  useEffect(() => {
+    if (isClient) {
+      const fetchLocations = async () => {
+        try {
+          const response = await fetch('/api/tracker/route'); // Adjust the API endpoint if needed
+          const data = await response.json();
+          console.log(data);
+          if (data.success) {
+            setLocations(data.data); // Set the locations data to the state
+          } else {
+            console.error('Failed to fetch locations');
+          }
+        } catch (error) {
+          console.error('Error fetching locations:', error);
+        } finally {
+          setIsLoading(false); // Set loading to false once data is fetched
+        }
+      };
+
+      fetchLocations();
+    }
+  }, [isClient]); // Runs only after component mounts on the client
+
+  // Watch for user geolocation (only on client side)
+  useEffect(() => {
+    if (isClient && !isLoading && "geolocation" in navigator) {
       const watcher = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserPosition([latitude, longitude]);
 
-          // Check proximity
+          // Check proximity to each location
           locations.forEach((loc) => {
-            const distance = getDistance(latitude, longitude, loc.locationLatitude, loc.locationLongitude);
-            if (distance < 50) {
+            const distance = getDistance(latitude, longitude, loc.latitude, loc.longitude);
+            if (distance < 50) { // 50 meters proximity
               alert(`You are near ${loc.locationName}`);
             }
           });
@@ -43,7 +62,7 @@ export default function Home() {
 
       return () => navigator.geolocation.clearWatch(watcher);
     }
-  }, []);
+  }, [locations, isLoading, isClient]); // Re-run when locations or isLoading changes
 
   const getDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Earth radius in meters
@@ -60,5 +79,15 @@ export default function Home() {
     return R * c; // Distance in meters
   };
 
-  return <Map locations={locations} userPosition={userPosition} />;
+  if (isLoading) {
+    return <div>Loading...</div>; // Show a loading message or spinner while fetching locations
+  }
+
+  return (
+    <div>
+      {isClient ? (
+        <Map locations={locations} userPosition={userPosition} />
+      ) : null}
+    </div>
+  );
 }

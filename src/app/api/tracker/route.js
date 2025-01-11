@@ -1,17 +1,30 @@
 import { NextResponse } from 'next/server';
-import mongoDB from '../../../../lib/mongoDB/mongoDB'
+import mongoDB from '../../../../lib/mongoDB/mongoDB';
 import locationTracker from '../../../../lib/config/models/locationTracker';
 
-export async function GET(request,response) {
-  console.log('location added');
-  return NextResponse.json({ msg: response });
+export async function GET() {
+  try {
+    console.log('Fetching location data');
+
+    // Connect to MongoDB
+    await mongoDB();
+
+    // Fetch all location data from the database
+    const locations = await locationTracker.find();
+
+    // Return the data in the response
+    return NextResponse.json({ success: true, data: locations });
+  } catch (error) {
+    console.error('Error fetching location data:', error);
+    return NextResponse.json({ success: false, msg: 'Error fetching data' }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
   // Get the data as Form Data
   const formData = await request.formData();
 
-  //Get the current timestamp
+  // Get the current timestamp
   const timestamp = Date.now();
 
   // Prepare location data

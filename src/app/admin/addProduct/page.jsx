@@ -1,102 +1,124 @@
 "use client"
-import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
-import axios from 'axios'
-import { toast, ToastContainer } from 'react-toastify';  // <-- Import toast
-import 'react-toastify/dist/ReactToastify.css';
+import { useState } from 'react';
 
-const AddProduct = () => {
-    const [image, setImage] = useState(null);  // Change initial value to null
-    const [data, setData] = useState(
-        {
-            title: "",
-            description: "",
-            category: "Startup",
-            author: "John Doe",
-            authorImg: "/author_img.png"
-        }
-    )
+export default function AddLocation() {
+  const [formData, setFormData] = useState({
+    longitude: '',
+    latitude: '',
+    potholes: '',
+    animalProneAreas: '',
+  });
 
-    const [isClient, setIsClient] = useState(false); // State to check if we are on the client side
+  const [statusMessage, setStatusMessage] = useState('');
 
-    useEffect(() => {
-        // This will run only once on the client side
-        setIsClient(true);
-    }, []);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    const onChangeHandler = (event) => {
-        const name = event.target.name;
-        const value = event.target.value;
-        setData(data => ({ ...data, [name]: value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch('/api/tracker', {
+        method: 'POST',
+        body: new URLSearchParams(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setStatusMessage('Location added successfully!');
+        setFormData({ longitude: '', latitude: '', potholes: '', animalProneAreas: '' });
+      } else {
+        setStatusMessage('Failed to add location. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setStatusMessage('An unexpected error occurred.');
     }
+  };
 
-    // Handle image selection
-    const handleImageChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setImage(e.target.files[0]);
-        }
-    };
+  return (
+    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
+      <h1>Add Location</h1>
+      <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: 'auto' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Longitude:
+            <input
+              type="text"
+              name="longitude"
+              value={formData.longitude}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            />
+          </label>
+        </div>
 
-    // Submit data logic with error handling
-    const onSubmitHandler = async (e) => {
-        e.preventDefault();
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Latitude:
+            <input
+              type="text"
+              name="latitude"
+              value={formData.latitude}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            />
+          </label>
+        </div>
 
-        try {
-            const formData = new FormData();
-            formData.append('title', data.title);
-            formData.append('description', data.description);
-            formData.append('category', data.category);
-            formData.append('author', data.author);
-            formData.append('authorImg', data.authorImg);
-            formData.append('image', image);  // Append the image file
-            formData.append('timestamp', Date.now()); // Add timestamp for unique filenames
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Potholes:
+            <input
+              type="text"
+              name="potholes"
+              value={formData.potholes}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            />
+          </label>
+        </div>
 
-            const response = await axios.post('/api/blog', formData);
+        <div style={{ marginBottom: '10px' }}>
+          <label>
+            Animal Prone Areas:
+            <input
+              type="text"
+              name="animalProneAreas"
+              value={formData.animalProneAreas}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+            />
+          </label>
+        </div>
 
-            if (response.data.success) {
-                toast.success(response.data.msg);
-                // Reset fields after successful submission
-                setImage(null);
-                setData({
-                    title: "",
-                    description: "",
-                    category: "Startup",
-                    author: "John Doe",
-                    authorImg: "/author_img.png"
-                });
-            } else {
-                toast.error("Error: " + response.data.msg);
-            }
-        } catch (error) {
-            console.error("Error during submission:", error);
-            toast.error("Error: " + error.response?.data?.message || error.message);
-        }
-    }
+        <button
+          type="submit"
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+          }}
+        >
+          Add Location
+        </button>
+      </form>
 
-    return (
-        <>
-            <form onSubmit={onSubmitHandler} className='px-5 sm:pt-2 sm:pl-8'>
-
-                <p className='text-base mt-4'>Longitude</p>
-                <input type="text" name='longitude' onChange={onChangeHandler} value={data.longitude} placeholder='Enter text here'
-                    className='w-full sm:w-[500px] mt-3 px-4 py-1 border' />
-
-                <p className='text-base mt-4'>Latitude</p>
-                <input type="text" name='latitude' onChange={onChangeHandler} value={data.latitude} placeholder='Enter text here'
-                    className='w-full sm:w-[500px] mt-3 px-4 py-1 border' />
-
-                <p className='text-base mt-4'>Potholes</p>
-                <input type="text" name='potholes' onChange={onChangeHandler} value={data.potholes} placeholder='Enter text here'
-                    className='w-full sm:w-[500px] mt-3 px-4 py-1 border' />
-
-                <p className='text-base mt-4'>Animal Prone Areas</p>
-                <input type="text" name='animalproneareas' onChange={onChangeHandler} value={data.animalproneareas} placeholder='Enter text here'
-                    className='w-full sm:w-[500px] mt-3 px-4 py-1 border' />
-                <br />
-                <button type='submit' className='mt-6 w-36 h-10 border-radius bg-black text-white'>Add</button>
-            </form>
-        </>
-    )
+      {statusMessage && (
+        <p style={{ marginTop: '20px', color: statusMessage.includes('successfully') ? 'green' : 'red' }}>
+          {statusMessage}
+        </p>
+      )}
+    </div>
+  );
 }
-
-export default AddProduct;
