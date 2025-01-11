@@ -1,0 +1,8 @@
+{
+    "functions": {
+      "api/tracker/route.js": {
+        "maxDuration": 30
+      }
+    }
+  }
+  
