@@ -114,7 +114,7 @@ export default function Home() {
             key={index}
             position={[loc.locationLatitude, loc.locationLongitude]}
           >
-            <Popup>{loc.locationName}</Popup>
+            {/* <Popup>{loc.locationName}</Popup> */}
           </Marker>
         ))}
         {userPosition && (
