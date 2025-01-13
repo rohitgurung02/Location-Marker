@@ -5,10 +5,21 @@ import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 
 // Dynamically import react-leaflet components to avoid SSR issues
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
 export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
@@ -17,6 +28,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchLocations = async () => {
+      setIsLoading(true); // Start loading
       try {
         const response = await fetch("/api/tracker");
         const data = await response.json();
@@ -34,7 +46,7 @@ export default function Home() {
       } catch (error) {
         console.error("Error fetching locations:", error);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Stop loading
       }
     };
 
@@ -85,16 +97,23 @@ export default function Home() {
     return R * c; // Distance in meters
   };
 
-  if (isLoading) {
-    return <div>Loading map and data...</div>; // Show a loading message or spinner while fetching data
+  if (isLoading || !userPosition) {
+    return <div>Loading map and data...</div>;
   }
 
   return (
     <div>
-      <MapContainer center={userPosition || [0, 0]} zoom={15} style={{ height: "100vh", width: "100%" }}>
+      <MapContainer
+        center={userPosition || [0, 0]}
+        zoom={15}
+        style={{ height: "100vh", width: "100%" }}
+      >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {locations.map((loc, index) => (
-          <Marker key={index} position={[loc.locationLatitude, loc.locationLongitude]}>
+          <Marker
+            key={index}
+            position={[loc.locationLatitude, loc.locationLongitude]}
+          >
             <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
