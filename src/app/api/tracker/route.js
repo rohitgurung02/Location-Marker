@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import mongoDB from "../../../../lib/mongoDB/mongoDB";
+import mongoDB from '../../../../lib/mongoDB/mongoDB'
 import locationTracker from "../../../../lib/config/models/locationTracker";
 
 export async function GET() {
