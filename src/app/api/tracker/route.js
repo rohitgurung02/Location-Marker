@@ -8,7 +8,7 @@ export async function GET() {
     await mongoDB();
 
     console.log("Fetching location data...");
-    const locations = await locationTracker.find();
+    const locations = await locationTracker.find().limit(100); // Add pagination or limit
 
     console.log("Fetched locations:", locations);
     return NextResponse.json({ success: true, data: locations });
@@ -20,6 +20,7 @@ export async function GET() {
     );
   }
 }
+
 
 
 export async function POST(request) {
