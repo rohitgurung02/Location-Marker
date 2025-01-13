@@ -4,15 +4,13 @@ import locationTracker from "../../../../lib/config/models/locationTracker";
 
 export async function GET() {
   try {
-    console.log("Fetching location data");
-
-    // Connect to MongoDB
+    console.log("Connecting to MongoDB...");
     await mongoDB();
 
-    // Fetch all location data from the database
+    console.log("Fetching location data...");
     const locations = await locationTracker.find();
 
-    // Return the data in the response
+    console.log("Fetched locations:", locations);
     return NextResponse.json({ success: true, data: locations });
   } catch (error) {
     console.error("Error fetching location data:", error);
@@ -22,6 +20,7 @@ export async function GET() {
     );
   }
 }
+
 
 export async function POST(request) {
   // Get the data as Form Data

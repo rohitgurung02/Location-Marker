@@ -40,3 +40,11 @@ a {
     color-scheme: dark;
   }
 }
+
+
+.leaflet-container {
+  height: 100vh !important;
+  width: 100vw !important;
+  margin: 0;
+  padding: 0;
+}
