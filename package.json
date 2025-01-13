@@ -18,7 +18,8 @@
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
     "react-toastify": "^11.0.2",
-    "toastify": "^2.0.1"
+    "toastify": "^2.0.1",
+    "vercel": "^39.2.6"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
