@@ -4,22 +4,11 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 
-// Dynamically import react-leaflet components to avoid SSR issues
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false }
-);
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
-  ssr: false,
-});
+// Dynamically import react-leaflet components
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
 
 export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
@@ -28,7 +17,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchLocations = async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       try {
         const response = await fetch("/api/tracker");
         const data = await response.json();
@@ -40,63 +29,31 @@ export default function Home() {
             locationName: loc.potholes || loc.animalProneAreas,
           }));
           setLocations(validLocations);
-        } else {
-          console.error("Failed to fetch locations");
         }
       } catch (error) {
         console.error("Error fetching locations:", error);
       } finally {
-        setIsLoading(false); // Stop loading
+        setIsLoading(false);
       }
     };
 
     fetchLocations();
   }, []);
 
-  // Watch for user geolocation
   useEffect(() => {
     if (!isLoading && navigator.geolocation) {
       const watcher = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserPosition([latitude, longitude]);
-  
-          // Check proximity to each location
-          locations.forEach((loc) => {
-            const distance = getDistance(
-              latitude,
-              longitude,
-              loc.locationLatitude,
-              loc.locationLongitude
-            );
-            if (distance < 50) {
-              alert(`You are near ${loc.locationName}`);
-            }
-          });
         },
         (error) => console.error(error),
         { enableHighAccuracy: true }
       );
-  
-      return () => navigator.geolocation.clearWatch(watcher); // Cleanup
+
+      return () => navigator.geolocation.clearWatch(watcher);
     }
-  }, [locations, isLoading]);
-  
-
-  const getDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-  };
+  }, [isLoading]);
 
   if (isLoading || !userPosition) {
     return <div>Loading map and data...</div>;
@@ -104,25 +61,16 @@ export default function Home() {
 
   return (
     <div>
-      <MapContainer
-        center={userPosition || [0, 0]}
-        zoom={15}
-        style={{ height: "100vh", width: "100%" }}
-      >
+      <MapContainer center={userPosition} zoom={15} style={{ height: "100vh", width: "100vw" }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {locations.map((loc, index) => (
-          <Marker
-            key={index}
-            position={[loc.locationLatitude, loc.locationLongitude]}
-          >
-            {/* <Popup>{loc.locationName}</Popup> */}
+          <Marker key={index} position={[loc.locationLatitude, loc.locationLongitude]}>
+            <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
-        {userPosition && (
-          <Marker position={userPosition}>
-            <Popup>You are here</Popup>
-          </Marker>
-        )}
+        <Marker position={userPosition}>
+          <Popup>You are here</Popup>
+        </Marker>
       </MapContainer>
     </div>
   );
