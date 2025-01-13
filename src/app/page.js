@@ -55,12 +55,12 @@ export default function Home() {
 
   // Watch for user geolocation
   useEffect(() => {
-    if (!isLoading && "geolocation" in navigator) {
+    if (!isLoading && navigator.geolocation) {
       const watcher = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserPosition([latitude, longitude]);
-
+  
           // Check proximity to each location
           locations.forEach((loc) => {
             const distance = getDistance(
@@ -77,10 +77,11 @@ export default function Home() {
         (error) => console.error(error),
         { enableHighAccuracy: true }
       );
-
-      return () => navigator.geolocation.clearWatch(watcher);
+  
+      return () => navigator.geolocation.clearWatch(watcher); // Cleanup
     }
   }, [locations, isLoading]);
+  
 
   const getDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Earth radius in meters
