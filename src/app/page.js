@@ -88,7 +88,7 @@ export default function Home() {
         );
 
         if (distance <= 50 && !alertedLocations.has(index)) {
-          alert(`You are within 20 meters of: ${loc.locationName}`);
+          alert(`You are within 50 meters of: ${loc.locationName}`);
           setAlertedLocations((prev) => new Set(prev).add(index));
         }
       });
