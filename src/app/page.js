@@ -3,12 +3,28 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet"; // Import Leaflet
 
 // Dynamically import react-leaflet components
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false });
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
+
+// Create custom icons
+const blueIcon = new L.Icon({
+  iconUrl: "/location.png",
+  iconSize: [30, 40],
+  iconAnchor: [15, 40],
+  popupAnchor: [0, -35],
+});
+
+const redIcon = new L.Icon({
+  iconUrl: "/marker-icon-2x.png",
+  iconSize: [30, 40],
+  iconAnchor: [15, 40],
+  popupAnchor: [0, -35],
+});
 
 export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
@@ -104,11 +120,15 @@ export default function Home() {
       <MapContainer center={userPosition} zoom={15} style={{ height: "100vh", width: "100vw" }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {locations.map((loc, index) => (
-          <Marker key={index} position={[loc.locationLatitude, loc.locationLongitude]}>
+          <Marker
+            key={index}
+            position={[loc.locationLatitude, loc.locationLongitude]}
+            icon={redIcon}
+          >
             <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
-        <Marker position={userPosition}>
+        <Marker position={userPosition} icon={blueIcon}>
           <Popup>You are here</Popup>
         </Marker>
       </MapContainer>
