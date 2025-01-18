@@ -14,6 +14,7 @@ export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
   const [locations, setLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [alertedLocations, setAlertedLocations] = useState(new Set());
 
   // Haversine formula to calculate distance in meters
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -44,6 +45,7 @@ export default function Home() {
             locationName: loc.potholes || loc.animalProneAreas,
           }));
           setLocations(validLocations);
+          console.log("Fetched locations:", validLocations);
         }
       } catch (error) {
         console.error("Error fetching locations:", error);
@@ -60,6 +62,7 @@ export default function Home() {
       const watcher = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          console.log("User position updated:", latitude, longitude);
           setUserPosition([latitude, longitude]);
         },
         (error) => console.error(error),
@@ -72,7 +75,7 @@ export default function Home() {
 
   useEffect(() => {
     if (userPosition) {
-      locations.forEach((loc) => {
+      locations.forEach((loc, index) => {
         const distance = calculateDistance(
           userPosition[0],
           userPosition[1],
@@ -80,12 +83,17 @@ export default function Home() {
           loc.locationLongitude
         );
 
-        if (distance <= 10) {
-          alert(`You are within 10 meters of: ${loc.locationName}`);
+        console.log(
+          `Distance to ${loc.locationName}: ${distance.toFixed(2)} meters`
+        );
+
+        if (distance <= 20 && !alertedLocations.has(index)) {
+          alert(`You are within 20 meters of: ${loc.locationName}`);
+          setAlertedLocations((prev) => new Set(prev).add(index));
         }
       });
     }
-  }, [userPosition, locations]);
+  }, [userPosition, locations, alertedLocations]);
 
   if (isLoading || !userPosition) {
     return <div>Loading map and data...</div>;
