@@ -21,7 +21,7 @@ export default function Home() {
     // Create custom icon only on the client side
     if (typeof window !== "undefined") {
       const icon = L.icon({
-        iconUrl: "/car.png", // Path to your custom marker image
+        iconUrl: "car.png", // Path to your custom marker image
         iconSize: [32, 32],
         iconAnchor: [16, 32], // Anchor the bottom center of the icon
         popupAnchor: [0, -32], // Popup position relative to the icon
