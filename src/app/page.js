@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -15,19 +15,34 @@ export default function Home() {
   const [userPosition, setUserPosition] = useState(null);
   const [locations, setLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [carIcon, setCarIcon] = useState(null);
 
-  // Create custom icon only on the client side using useMemo
-  const carIcon = useMemo(() => {
+  useEffect(() => {
+    // Create custom icon only on the client side
     if (typeof window !== "undefined") {
-      return L.icon({
+      const icon = L.icon({
         iconUrl: "/car.png", // Path to your custom marker image
         iconSize: [32, 32],
         iconAnchor: [16, 32], // Anchor the bottom center of the icon
         popupAnchor: [0, -32], // Popup position relative to the icon
       });
+      setCarIcon(icon);
     }
-    return null;
   }, []);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth radius in meters
+    const toRad = (value) => (value * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -86,21 +101,7 @@ export default function Home() {
     }
   }, [userPosition, locations]);
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371000; // Earth radius in meters
-    const toRad = (value) => (value * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
-
-  if (isLoading || !userPosition) {
+  if (isLoading || !userPosition || !carIcon) {
     return <div>Loading map and data...</div>;
   }
 
@@ -113,11 +114,9 @@ export default function Home() {
             <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
-        {carIcon && (
-          <Marker position={userPosition} icon={carIcon}>
-            <Popup>You are here</Popup>
-          </Marker>
-        )}
+        <Marker position={userPosition} icon={carIcon}>
+          <Popup>You are here</Popup>
+        </Marker>
       </MapContainer>
     </div>
   );
