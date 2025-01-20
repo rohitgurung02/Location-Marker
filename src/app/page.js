@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-
+import L from "leaflet";
 // Dynamically import react-leaflet components
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
@@ -16,10 +15,22 @@ export default function Home() {
   const [locations, setLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Ensure code only runs on the client
-    if (typeof window === "undefined") return;
+  // Haversine formula to calculate distance in meters
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth radius in meters
+    const toRad = (value) => (value * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
 
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  useEffect(() => {
     const fetchLocations = async () => {
       setIsLoading(true);
       try {
@@ -45,8 +56,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
     if (!isLoading && navigator.geolocation) {
       const watcher = navigator.geolocation.watchPosition(
         (position) => {
@@ -62,43 +71,27 @@ export default function Home() {
   }, [isLoading]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !userPosition) return;
+    if (userPosition) {
+      locations.forEach((loc) => {
+        const distance = calculateDistance(
+          userPosition[0],
+          userPosition[1],
+          loc.locationLatitude,
+          loc.locationLongitude
+        );
 
-    const calculateDistance = (lat1, lon1, lat2, lon2) => {
-      const R = 6371000; // Earth radius in meters
-      const toRad = (value) => (value * Math.PI) / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
-
-    locations.forEach((loc) => {
-      const distance = calculateDistance(
-        userPosition[0],
-        userPosition[1],
-        loc.locationLatitude,
-        loc.locationLongitude
-      );
-
-      if (distance <= 100) {
-        alert(`You are within 100 meters of: ${loc.locationName}`);
-      }
-    });
+        if (distance <= 100) {
+          alert(`You are within 100 meters of: ${loc.locationName}`);
+        }
+      });
+    }
   }, [userPosition, locations]);
-
-  const userIcon = L.icon({
-    iconUrl: "/car.png", // Replace with the path to your custom marker image
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30],
-  });
-
+  var carIcon = L.icon({
+    iconUrl: '/car.png',
+    iconSize:     [32, 32],
+    iconAnchor:   [32, 32], 
+    popupAnchor:  [-3, -76] 
+});
   if (isLoading || !userPosition) {
     return <div>Loading map and data...</div>;
   }
@@ -112,7 +105,7 @@ export default function Home() {
             <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
-        <Marker position={userPosition} icon={userIcon}>
+        <Marker position={userPosition} icon={carIcon}>
           <Popup>You are here</Popup>
         </Marker>
       </MapContainer>
