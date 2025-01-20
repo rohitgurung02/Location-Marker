@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+
 // Dynamically import react-leaflet components
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
@@ -15,20 +16,18 @@ export default function Home() {
   const [locations, setLocations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Haversine formula to calculate distance in meters
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371000; // Earth radius in meters
-    const toRad = (value) => (value * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
+  // Create custom icon only on the client side using useMemo
+  const carIcon = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return L.icon({
+        iconUrl: "/car.png", // Path to your custom marker image
+        iconSize: [32, 32],
+        iconAnchor: [16, 32], // Anchor the bottom center of the icon
+        popupAnchor: [0, -32], // Popup position relative to the icon
+      });
+    }
+    return null;
+  }, []);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -86,12 +85,21 @@ export default function Home() {
       });
     }
   }, [userPosition, locations]);
-  var carIcon = L.icon({
-    iconUrl: '/car.png',
-    iconSize:     [32, 32],
-    iconAnchor:   [32, 32], 
-    popupAnchor:  [-3, -76] 
-});
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth radius in meters
+    const toRad = (value) => (value * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   if (isLoading || !userPosition) {
     return <div>Loading map and data...</div>;
   }
@@ -105,9 +113,11 @@ export default function Home() {
             <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
-        <Marker position={userPosition} icon={carIcon}>
-          <Popup>You are here</Popup>
-        </Marker>
+        {carIcon && (
+          <Marker position={userPosition} icon={carIcon}>
+            <Popup>You are here</Popup>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   );
