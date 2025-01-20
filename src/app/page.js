@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import * as L from "leaflet";
+
 
 
 // Dynamically import react-leaflet components
