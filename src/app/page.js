@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Dynamically import react-leaflet components
@@ -86,7 +87,12 @@ export default function Home() {
       });
     }
   }, [userPosition, locations]);
-
+  const userIcon = L.icon({
+    iconUrl: "/car.png", // Replace with the path to your custom marker image
+    iconSize: [30, 30], // Adjust size
+    iconAnchor: [15, 30], // Anchor at the bottom center of the icon
+    popupAnchor: [0, -30], // Popup position relative to the icon
+  });
   if (isLoading || !userPosition) {
     return <div>Loading map and data...</div>;
   }
@@ -100,7 +106,7 @@ export default function Home() {
             <Popup>{loc.locationName}</Popup>
           </Marker>
         ))}
-        <Marker position={userPosition}>
+        <Marker position={userPosition} icon={userIcon}>
           <Popup>You are here</Popup>
         </Marker>
       </MapContainer>
