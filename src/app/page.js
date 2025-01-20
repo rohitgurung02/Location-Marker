@@ -80,8 +80,8 @@ export default function Home() {
           loc.locationLongitude
         );
 
-        if (distance <= 10) {
-          alert(`You are within 10 meters of: ${loc.locationName}`);
+        if (distance <= 100) {
+          alert(`You are within 100 meters of: ${loc.locationName}`);
         }
       });
     }
