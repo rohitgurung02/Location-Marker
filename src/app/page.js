@@ -19,17 +19,28 @@ export default function Home() {
   const [carIcon, setCarIcon] = useState(null);
 
   useEffect(() => {
-    // Create custom icon only on the client side
-    if (typeof window !== "undefined") {
-      const icon = L.icon({
-        iconUrl: "car.png", // Path to your custom marker image
-        iconSize: [32, 32],
-        iconAnchor: [16, 32], // Anchor the bottom center of the icon
-        popupAnchor: [0, -32], // Popup position relative to the icon
-      });
-      setCarIcon(icon);
+    let isMounted = true;
+  
+    async function loadLeaflet() {
+      const { default: Leaflet } = await import("leaflet");
+      if (isMounted) {
+        const carIcon = Leaflet.icon({
+          iconUrl: "car.png",
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
+        });
+        setCarIcon(carIcon);
+      }
     }
+  
+    loadLeaflet();
+  
+    return () => {
+      isMounted = false;
+    };
   }, []);
+  
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371000; // Earth radius in meters
